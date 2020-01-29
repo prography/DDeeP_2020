@@ -33,6 +33,7 @@ parser.add_argument("-c", "--score", help="whether show the confidence score",ac
 args = parser.parse_args()
 conf = get_config(False)
 
+name_list=[]
 register_list=[]
 mtcnn=MTCNN()
 print("mtcnn loaded")
@@ -59,19 +60,24 @@ else:
 @app.route('/register',methods=["POST"])
 def register():
 
-    print("--------------")
+    print("-------Register-------")
 
     register_face = request.json['face_list']
+
     register_np = np.array(register_face)
     register_pil = Image.fromarray(register_np, mode='RGB')
     feature = get_face_feature(conf, learner.model, register_pil)
     register_list.append(feature)
-    print(register_list)
-    return "register success!"
+
+    register_name = request.json['register_name']
+    name_list.append(register_name)
+    #print(register_list)
+
+    return register_name+"register success!"
 
 @app.route('/register_check',methods=["POST"])
 def register_check():
-    print(">>>>>>>>>>>>>")
+    print(">>>>>>>Register_check<<<<<<<")
 
     face_list = request.json['face_list']
     check_list = []
@@ -91,6 +97,7 @@ def register_check():
 
 @app.route('/ReadFeature')
 def ReadFeature():
+    print("[[[[[[[ReadFeature]]]]]]]")
     ReadName = request.args.get('name')
     try:
         result_idx = name_list.index(ReadName)
@@ -105,6 +112,7 @@ def ReadFeature():
 
 @app.route('/update', methods=["POST", "GET"])
 def update():
+    print("(((((((Update)))))))")
     if request.method == 'GET':
         old_name = request.args.get('old_name')
         new_name = request.args.get('new_name')
@@ -130,6 +138,7 @@ def update():
             return name + ' is not a registered face'
 @app.route('/delete', methods=["DELETE"])
 def delete():
+    print("<<<<<<<Delete>>>>>>>")
     name = request.args.get('name')
     try:
         idx = name_list.index(name)

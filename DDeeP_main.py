@@ -87,13 +87,18 @@ def get_pic():
             warped_face = np.array(mtcnn.align(p))[..., ::-1]
             re_img = mtcnn.align(p)
             tolist_face = np.array(re_img).tolist()
+            name = 'Seo Yeon'
             URL = server + "register"
+
             tolist_img = warped_face.tolist()
-            json_feed = {'face_list': tolist_face}
+            json_feed = {'face_list': tolist_face,'register_name':name}
             response = requests.post(URL, json=json_feed)
 
         except:
             print('no face captured')
+
+
+
     if cv2.waitKey(0) & 0xFF == ord('c'):
         URL = server + "ReadFeature"
         params = {'name': 'A'}
