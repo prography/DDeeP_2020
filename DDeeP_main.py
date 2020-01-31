@@ -44,20 +44,23 @@ else:
     learner.load_state(conf, 'final.pth', True, True)
 learner.model.eval()
 print('learner loaded')
-
+"""
 if args.update:
     targets, names = prepare_facebank(conf, learner.model, mtcnn, tta=args.tta)
     print('facebank updated')
 else:
     targets, names = load_facebank(conf)
     print('facebank loaded')
+"""
 
 
-def get_pic():
+def DDeeP():
     isSuccess, frame = cap.read()
 
     if isSuccess:
         try:
+            global name
+
             image = Image.fromarray(frame)
             bboxes, faces = mtcnn.align_multi(image, conf.face_limit, conf.min_face_size)
             bboxes = bboxes[:, :-1]  # shape:[10,4],only keep 10 highest possibiity faces
@@ -81,54 +84,61 @@ def get_pic():
         except:
             print("detect error")
 
-    if cv2.waitKey(1) & 0xFF == ord('t'):
-        p = Image.fromarray(frame[..., ::-1])
-        try:
-            warped_face = np.array(mtcnn.align(p))[..., ::-1]
-            re_img = mtcnn.align(p)
-            tolist_face = np.array(re_img).tolist()
-            name = 'Seo Yeon'
-            URL = server + "register"
+        if cv2.waitKey(1) & 0xFF == ord('t'):
+            p = Image.fromarray(frame[..., ::-1])
+            try:
+                warped_face = np.array(mtcnn.align(p))[..., ::-1]
+                re_img = mtcnn.align(p)
+                tolist_face = np.array(re_img).tolist()
+                #name 이부분에서 입력받도록 해야함.
+                name = 'Seo Yeon'
+                URL = server + "register"
 
-            tolist_img = warped_face.tolist()
-            json_feed = {'face_list': tolist_face,'register_name':name}
-            response = requests.post(URL, json=json_feed)
+                tolist_img = warped_face.tolist()
+                json_feed = {'face_list': tolist_face,'register_name':name}
+                response = requests.post(URL, json=json_feed)
 
-        except:
-            print('no face captured')
+            except:
+                print('no face captured')
 
 
 
-    if cv2.waitKey(0) & 0xFF == ord('c'):
-        URL = server + "ReadFeature"
-        params = {'name': 'A'}
-        res = requests.get(URL, params=params)
-        res = res.json()
-        res = res['result']
-        print(res)
-    # 키보드에서 n를 누르면 name update
-    if cv2.waitKey(0) & 0xFF == ord('n'):
-        URL = server + 'update'
-        params = {'old_name': 'A', 'new_name': 'NEW'}
-        res = requests.get(URL, params=params)
-        print(res.text)
-    # 키보드에서 u를 누르면 등록된 얼굴을 update할 수 있다.
-    if cv2.waitKey(0) & 0xFF == ord('u'):
-        newpic = Image.fromarray(frame[..., ::-1])
-        new_img = np.array(newpic).tolist()
-        URL = server + 'update'
-        json_feed = {'name': 'NEW', 'new_image': new_img}
-        res = requests.post(URL, json=json_feed)
-    # 키보드에서 d를 누르면 삭제가능.
-    if cv2.waitKey(0) & 0xFF == ord('d'):
-        URL = server + 'delete'
-        params = {'name': 'NEW'}
-        res = requests.delete(URL, params=params)
-        print(res.text)
+        if cv2.waitKey(0) & 0xFF == ord('c'):
+            URL = server + "ReadFeature"
+            params = {'name': name}
+            res = requests.get(URL, params=params)
+            res = res.json()
+            res = res['result']
+            print(res)
+        # 키보드에서 n를 누르면 name update 이부분에 대해서는 추후에 업데이트 기능을 만들도록.
+        if cv2.waitKey(0) & 0xFF == ord('n'):
+
+            URL = server + 'update'
+            new_name ='NEW'
+            params = {'old_name': name, 'new_name': new_name}
+            name = new_name
+            res = requests.get(URL, params=params)
+            print(res.text)
+
+
+        # 키보드에서 u를 누르면 등록된 얼굴을 update할 수 있다.
+        if cv2.waitKey(0) & 0xFF == ord('u'):
+            newpic = Image.fromarray(frame[..., ::-1])
+            new_img = np.array(newpic).tolist()
+            URL = server + 'update'
+            json_feed = {'name': name, 'new_image': new_img}
+            res = requests.post(URL, json=json_feed)
+        # 키보드에서 d를 누르면 삭제가능.
+        if cv2.waitKey(0) & 0xFF == ord('d'):
+            URL = server + 'delete'
+            #이 부분을 변수화해야함.
+            params = {'name': name}
+            res = requests.delete(URL, params=params)
+            print(res.text)
 
 
 while cap.isOpened():
-    get_pic()
+    DDeeP()
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 

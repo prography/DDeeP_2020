@@ -48,13 +48,14 @@ else:
     learner.load_state(conf, 'final.pth', True, True)
 learner.model.eval()
 print('learner loaded')
+"""
 if args.update:
     targets, names = prepare_facebank(conf, learner.model, mtcnn, tta=args.tta)
     print('facebank updated')
 else:
     targets, names = load_facebank(conf)
     print('facebank loaded')
-
+"""
 
 #register에서는 얼굴 촬영해서 얼굴의feature만 보내줌.
 @app.route('/register',methods=["POST"])
