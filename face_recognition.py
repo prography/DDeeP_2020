@@ -55,8 +55,10 @@ def get_face_feature(conf, model, img, tta=False):
 
 def get_max_cos(feature, feature_list):
     max_sim = 0
-    for compare in feature_list:
-        sim = cosine_similarity(feature, compare)
+    i=-1
+    for idx in range(len(feature_list)):
+        sim = cosine_similarity(feature, feature_list[idx])
         if(sim>max_sim):
             max_sim = sim
-    return max_sim
+            i=idx
+    return i,max_sim

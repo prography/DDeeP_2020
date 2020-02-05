@@ -18,7 +18,7 @@ from mtcnn_pytorch.src.align_trans import get_reference_facial_points, warp_and_
 #from take_pic_module import get_pic
 
 
-server = "http://127.0.0.1:5000/"
+server = "http://104.196.231.8:5000/"
 
 parser = argparse.ArgumentParser(description='take a picture')
 parser.add_argument('--name', '-n', default='unknown', type=str, help='input the name of the recording person')
@@ -29,7 +29,7 @@ args = parser.parse_args()
 
 conf = get_config(False)
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(-1)
 cap.set(3,1280)
 cap.set(4,720)
 

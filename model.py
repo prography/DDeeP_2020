@@ -1,10 +1,9 @@
-from torch.nn import Linear, Conv2d, BatchNorm1d, BatchNorm2d, PReLU, ReLU, Sigmoid, Dropout2d, Dropout, AvgPool2d, MaxPool2d, AdaptiveAvgPool2d, Sequential, Module, Parameter
+from torch.nn import Linear, Conv2d, BatchNorm1d, BatchNorm2d, PReLU, ReLU, Sigmoid, Dropout2d, Dropout, AvgPool2d, MaxPool2d, AdaptiveAvgPool2d, Sequential, Module, Parameter, Upsample
 import torch.nn.functional as F
 import torch
 from collections import namedtuple
 import math
 import pdb
-
 ##################################  Original Arcface Model #############################################################
 
 class Flatten(Module):
@@ -208,8 +207,10 @@ class MobileFaceNet(Module):
         self.conv_6_flatten = Flatten()
         self.linear = Linear(512, embedding_size, bias=False)
         self.bn = BatchNorm1d(embedding_size)
+        self.resize = Upsample(112)
     
     def forward(self, x):
+        x = self.resize(x)
         out = self.conv1(x)
 
         out = self.conv2_dw(out)
@@ -231,7 +232,7 @@ class MobileFaceNet(Module):
         out = self.conv_6_dw(out)
 
         out = self.conv_6_flatten(out)
-
+        print("öuthape , ", out.shape)
         out = self.linear(out)
 
         out = self.bn(out)

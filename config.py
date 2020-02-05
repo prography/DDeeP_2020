@@ -19,6 +19,7 @@ def get_config(training = True):
     conf.net_mode = 'mobilefacenet' # or 'ir'
     conf.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     conf.test_transform = trans.Compose([
+                    trans.Resize(128),
                     trans.ToTensor(),
                     trans.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
                 ])

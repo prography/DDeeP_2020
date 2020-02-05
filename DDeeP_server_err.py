@@ -7,6 +7,7 @@ from mtcnn import MTCNN
 from Learner import face_learner
 from utils import load_facebank, prepare_facebank
 
+import time
 import requests
 from pathlib import Path
 from multiprocessing import Process, Pipe,Value,Array
@@ -22,8 +23,8 @@ from face_recognition import get_face_feature, get_max_cos #11.16
 
 app = Flask(__name__)
 
-server = "http://127.0.0.1:5000/"
-#11.16
+#server = "http://127.0.0.1:5000/"
+
 parser = argparse.ArgumentParser(description='for face verification')
 parser.add_argument("-s", "--save", help="whether save",action="store_true")
 parser.add_argument('-th','--threshold',help='threshold to decide identical faces',default=1.54, type=float)
@@ -48,6 +49,14 @@ else:
     learner.load_state(conf, 'final.pth', True, True)
 learner.model.eval()
 print('learner loaded')
+"""
+if args.update:
+    targets, names = prepare_facebank(conf, learner.model, mtcnn, tta=args.tta)
+    print('facebank updated')
+else:
+    targets, names = load_facebank(conf)
+    print('facebank loaded')
+"""
 
 #register에서는 얼굴 촬영해서 얼굴의feature만 보내줌.
 @app.route('/register',methods=["POST"])
@@ -56,47 +65,93 @@ def register():
     print("-------Register-------")
 
     register_face = request.json['face_list']
-
     register_np = np.array(register_face)
-    if register_np.shape[0] > 1:
-        return "no"
-    elif register_np.shape[0] ==1:
-        register_np = np.squeeze(register_np)
-        register_pil = Image.fromarray(register_np, mode='RGB')
-        feature = get_face_feature(conf, learner.model, register_pil)
-        register_list.append(feature)
-
-        register_name = request.json['register_name']
-        name_list.append(register_name)
-
+   # print(register_np.shape)
+    if register_np[0] > 1:
+        return "no" 
+    elif register_np[0] ==1:
+	register_np = np.squeeze(register_np)
+    	print(register_np.shape)
+	register_pil = Image.fromarray(register_np, mode='RGB')
+	feature = get_face_feature(conf, learner.model, register_pil)
+	register_list.append(feature)
+	register_name = request.json['register_name']
+	name_list.append(register_name)
+    	#print(register_list)
 
     return register_name+"register success!"
 
 @app.route('/register_check',methods=["POST"])
 def register_check():
     print(">>>>>>>Register_check<<<<<<<")
-
     face_list = request.json['face_list']
     check_list = []
     for idx in range(len(face_list)):
         face = np.array(face_list[idx])
         pil_img = Image.fromarray(face, mode='RGB')
+        #start = time.time()
         feature = get_face_feature(conf, learner.model, pil_img)
-        i, cos_sim = get_max_cos(feature, register_list)
-        if cos_sim > 0.97:
+        #end = time.time()
+        #print("ëlsaped time : ", end- start)
+        i,cos_sim = get_max_cos(feature, register_list)
+        #end_2 = time.time()
+        #print("ëlsaped time 2: ", end_2 - start)
+        
+        if cos_sim > 0.9:
             check_list.append(name_list[i])
         else:
             check_list.append("unknown")
     print(check_list)
     check_list = {'check_list': check_list}
-
     return jsonify(check_list)
 
+
+@app.route('/ReadFeature')
+def ReadFeature():
+    print("[[[[[[[ReadFeature]]]]]]]")
+    ReadName = request.args.get('name')
+    try:
+        result_idx = name_list.index(ReadName)
+        result = register_list[result_idx]
+        result = result.tolist()
+    except:
+        result = ReadName + ' is not a registered face'
+
+    read = {'result': result}
+
+    return jsonify(read)
+"""
+@app.route('/update', methods=["POST", "GET"])
+def update():
+    print("(((((((Update)))))))")
+    if request.method == 'GET':
+        old_name = request.args.get('old_name')
+        new_name = request.args.get('new_name')
+        try:
+            name_idx = name_list.index(old_name)
+            name_list[name_idx] = new_name
+            return new_name + ' updated'
+        except:
+            return old_name + ' is not a registered face'
+    else:
+        name = request.json['name']
+        new_img = request.json['new_image']
+        try:
+            idx = name_list.index(name)
+            new_np = np.array(new_img)
+            new_np = np.uint8(new_np)
+            new_pil = Image.fromarray(new_np)
+            bbox, face = mtcnn.align(new_pil, conf.min_face_size)
+            feature = get_face_feature(conf, learner.model, face)
+            register_list[idx] = feature
+            return name + ' image updated'
+        except:
+            return name + ' is not a registered face'"
+"""
 @app.route('/delete', methods=["DELETE"])
 def delete():
     print("<<<<<<<Delete>>>>>>>")
-    name = request.json['name']
-    print(name)
+    name = request.args.get('name')
     try:
         idx = name_list.index(name)
         del name_list[idx]
@@ -107,4 +162,6 @@ def delete():
 
 
 if __name__ =='__main__':
-   app.run(host='0.0.0.0', port=5000,debug=True)
+    app.run(host='0.0.0.0',port=5000,debug=True)
+  # app.run(host='0.0.0.0', port=5000,debug=True)
+
